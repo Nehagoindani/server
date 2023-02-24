@@ -1,15 +1,19 @@
-// const path = require('path');
 const express = require('express');
 const app = express();
-const http = require('http');
-const server = http.createServer(app);
-const socketio = require('socket.io');
+const generateID = () => Math.random().toString(36).substring(2, 10);
+const PORT = process.env.PORT || 3000;
+app.use(express.urlencoded({extended: true}));
+app.use(express.json());
+const http = require('http').Server(app);
+const cors = require('cors');
+app.use(cors());
 
-const io = socketio(server);
-app.get('/', function (req, res) {
-  res.write(`<h1>Hello socket</h1> ${PORT}`);
-  res.end;
+const io = require('socket.io')(http, {
+  cors: {
+    origin: '<http://localhost:4000>',
+  },
 });
+
 io.on('connection', client => {
   console.log(`⚡: ${client.id} user just connected!`);
   client.on('send message', (data) => {
@@ -29,8 +33,11 @@ io.on('connection', client => {
   });
   
 });
-
-
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Hello socket',
+  });
+});
+http.listen(PORT, () => {
+  console.log(`Server listening on ${PORT}`);
+});
